@@ -1,0 +1,41 @@
+import java.io.StringReader;
+import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import net.sf.jsqlparser.parser.CCJSqlParserUtil;
+import net.sf.jsqlparser.statement.Statement;
+import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
+import net.sf.jsqlparser.statement.create.table.CreateTable;
+
+public class CreateTableParser {
+
+    public static void main(String[] args) {
+        String sql = "CREATE TABLE my_table (id INT, name VARCHAR(255), PRIMARY KEY (id));";
+        try {
+            Statement statement = CCJSqlParserUtil.parse(new StringReader(sql));
+            if (statement instanceof CreateTable) {
+                CreateTable createTable = (CreateTable) statement;
+                System.out.println(createTable.getTable().getName()); // 输出 "my_table"
+
+                // 获取所有列定义
+                createTable.getColumnDefinitions().forEach(column -> {
+                    String dataType = column.getColDataType().getDataType();
+                    String length = null;
+
+                    // 查找包含长度信息的属性
+                    Pattern pattern = Pattern.compile("\\w+\\((\\d+)\\)");
+                    Matcher matcher = pattern.matcher(Arrays.toString(column.getColumnSpecStrings()));
+
+                    if (matcher.find()) {
+                        length = matcher.group(1);
+                    }
+
+                    System.out.println(column.getColumnName() + " " + dataType + (length != null ? "(" + length + ")" : ""));
+                    // 输出列名、数据类型和长度
+                });
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
